@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1390" viewBox="0 0 1500 1390" role="img" aria-labelledby="title desc">
+<title id="title">Inside Motion Lab physics.js</title>
+<desc id="desc">RigidBody stores linear and angular state, accumulates forces and torque, applies impulses, transforms points and integrates motion. A simulation step applies input impulses and forces, integrates, then optionally runs bounceInside to correct barrier penetration and apply a frictionless contact impulse. Contact velocity includes rotation and effective inverse mass includes the lever arm.</desc>
+<defs>
+<linearGradient id="bg" x2="0" y2="1"><stop stop-color="#101a2b"/><stop offset="1" stop-color="#09111e"/></linearGradient>
+<linearGradient id="panel" x2="1" y2="1"><stop stop-color="#1c2b41"/><stop offset="1" stop-color="#142137"/></linearGradient>
+<marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#85ddb5"/></marker>
+<marker id="gold" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#ffd080"/></marker>
+<style>
+text{font-family:Inter,"Segoe UI",Arial,sans-serif;fill:#edf3fb}.title{font-size:36px;font-weight:750}.subtitle{font-size:17px;fill:#a8bad0}.section{font-size:13px;font-weight:750;letter-spacing:1.4px;fill:#91a7c2}.card{fill:url(#panel);stroke:#30435e;stroke-width:1.4}.head{font-size:21px;font-weight:700}.copy{font-size:16px;fill:#c1cfdf}.small{font-size:14px;fill:#a8b9cf}.code{font-family:Consolas,monospace;font-size:16px;fill:#91d9f5}.line{fill:none;stroke:#85ddb5;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+</style></defs>
+<rect width="1500" height="1390" fill="url(#bg)"/>
+<circle cx="1400" cy="50" r="190" fill="#2d527a" opacity=".1"/>
+
+<text x="72" y="70" class="title">Inside physics.js</text>
+<text x="74" y="103" class="subtitle">Shared 2D rigid-body motion and barrier response for the car, ship and brick.</text>
+<text x="72" y="150" class="section">1 · RIGIDBODY HOLDS THE STATE</text>
+<rect x="72" y="172" width="660" height="132" rx="16" class="card"/><rect x="72" y="172" width="6" height="132" rx="3" fill="#74c9ef"/>
+<text x="98" y="207" class="code">RigidBody · constructor / reset / clearForces</text>
+<text x="98" y="240" class="copy">Motion: position, velocity, angle, angularVelocity</text>
+<text x="98" y="268" class="copy">Mass and inertia resist translation and rotation.</text>
+<text x="98" y="290" class="small">reset() zeros motion; clearForces() zeros force and torque.</text>
+<rect x="762" y="172" width="666" height="132" rx="16" class="card"/><rect x="762" y="172" width="6" height="132" rx="3" fill="#74c9ef"/>
+<text x="788" y="207" class="head">Inputs and responsibilities</text>
+<text x="788" y="240" class="copy">Force and torque accumulate for the next integration step.</text>
+<text x="788" y="268" class="copy">Vehicle dynamics choose forces; shells supply contact geometry.</text>
+<text x="788" y="290" class="small">Game owns the clock and decides whether barriers are enabled.</text>
+<text x="72" y="350" class="section">2 · ONE SIMULATION STEP · CALLED BY GAME AND VEHICLE</text>
+<rect x="72" y="372" width="432" height="238" rx="16" class="card"/><rect x="72" y="372" width="6" height="238" rx="3" fill="#85ddb5"/>
+<rect x="534" y="372" width="432" height="238" rx="16" class="card"/><rect x="534" y="372" width="6" height="238" rx="3" fill="#85ddb5"/>
+<rect x="996" y="372" width="432" height="238" rx="16" class="card"/><rect x="996" y="372" width="6" height="238" rx="3" fill="#85ddb5"/>
+<text x="98" y="411" class="head">A · Impulses and forces</text>
+<text x="98" y="448" class="copy">Queued drag impulses change velocity now.</text>
+<text x="98" y="476" class="copy">Gravity / drag and dynamics add forces.</text>
+<text x="98" y="511" class="code">addForce(F, point)</text>
+<text x="98" y="539" class="code">force += F; torque += r × F</text>
+<text x="98" y="582" class="small">r = point − body.position</text>
+<text x="560" y="411" class="head">B · Integrate motion</text>
+<text x="560" y="448" class="code">integrate(dt) · semi-implicit Euler</text>
+<text x="560" y="484" class="code">velocity += force × dt / mass</text>
+<text x="560" y="511" class="code">spin += torque × dt / inertia</text>
+<text x="560" y="546" class="copy">Update position and angle using NEW speeds.</text>
+<text x="560" y="582" class="small">Clear force and torque after each step.</text>
+<text x="1022" y="411" class="head">C · Resolve barriers, if enabled</text>
+<text x="1022" y="448" class="code">bounceInside(body, bounds, support)</text>
+<text x="1022" y="484" class="copy">Move penetrated contacts back inside.</text>
+<text x="1022" y="511" class="copy">Apply an impulse if moving into the edge.</text>
+<text x="1022" y="546" class="copy">Changes position, velocity and spin.</text>
+<text x="1022" y="582" class="small">Game then updates trails / skids; draws later.</text>
+<path d="M504 488H526" class="line" marker-end="url(#arrow)"/>
+<path d="M966 488H988" class="line" marker-end="url(#arrow)"/>
+<text x="72" y="655" class="section">3 · POINTS, ROTATION AND INSTANT CHANGES</text>
+<rect x="72" y="676" width="432" height="158" rx="16" class="card"/><rect x="72" y="676" width="6" height="158" rx="3" fill="#74c9ef"/>
+<rect x="534" y="676" width="432" height="158" rx="16" class="card"/><rect x="534" y="676" width="6" height="158" rx="3" fill="#74c9ef"/>
+<rect x="996" y="676" width="432" height="158" rx="16" class="card"/><rect x="996" y="676" width="6" height="158" rx="3" fill="#74c9ef"/>
+<text x="98" y="711" class="code">toWorld(local) / toLocal(world)</text>
+<text x="98" y="746" class="copy">Rotate and translate between body-local</text>
+<text x="98" y="772" class="copy">coordinates and world coordinates.</text>
+<text x="98" y="805" class="small">Forces and impulses use world-space points.</text>
+<text x="560" y="711" class="code">velocityAt(worldPoint)</text>
+<text x="560" y="746" class="code">v(point) = v + spin × (−r.y, r.x)</text>
+<text x="560" y="772" class="copy">A rotating body has different speeds at</text>
+<text x="560" y="797" class="copy">different points; v is the centre velocity.</text>
+<text x="1022" y="711" class="code">applyImpulse(J, point)</text>
+<text x="1022" y="746" class="code">Δvelocity = J / mass</text>
+<text x="1022" y="772" class="code">Δspin = (r × J) / inertia</text>
+<text x="1022" y="805" class="small">Immediate change; no dt or force accumulation.</text>
+<text x="72" y="880" class="section">4 · BOUNCEINSIDE · CONTACT RESPONSE IN DETAIL</text>
+<rect x="72" y="902" width="432" height="368" rx="16" class="card"/><rect x="72" y="902" width="6" height="368" rx="3" fill="#ffd080"/>
+<text x="98" y="940" class="head">Frictionless, fixed barrier edges</text>
+<line x1="115" y1="1090" x2="450" y2="1090" stroke="#ffd080" stroke-width="4"/>
+<rect x="205" y="985" width="165" height="85" rx="8" fill="#223d55" stroke="#74c9ef" stroke-width="2" transform="rotate(10 287 1027)"/>
+<circle cx="287" cy="1027" r="5" fill="#74c9ef"/>
+<circle cx="361" cy="1081" r="5" fill="#ffd080"/>
+<path d="M287 1027L361 1081" stroke="#a8bad0" stroke-dasharray="5 4" stroke-width="2"/>
+<path d="M361 1081V995" fill="none" stroke="#ffd080" stroke-width="2" marker-end="url(#gold)"/>
+
+<text x="218" y="1014" class="small">centre</text>
+<text x="306" y="1069" class="small">r</text>
+<text x="376" y="1022" class="small">normal</text>
+<text x="329" y="1120" class="small">contact</text>
+<text x="98" y="1160" class="copy">Off-centre contact impulses can create spin.</text>
+<text x="98" y="1190" class="small">4 passes over left / right / bottom / top.</text>
+<text x="98" y="1217" class="small">Small demo solver: discrete contacts;</text>
+<text x="98" y="1243" class="small">no continuous collision detection or friction.</text>
+<rect x="534" y="902" width="894" height="368" rx="16" class="card"/><rect x="534" y="902" width="6" height="368" rx="3" fill="#ffd080"/>
+<text x="560" y="940" class="head">For each boundary edge, on each pass</text>
+<text x="560" y="978" class="copy">1. Ask support(normal) for the furthest surface point toward that edge.</text>
+<text x="588" y="1004" class="small">If at or beyond the edge, translate the body inward to remove penetration.</text>
+<text x="560" y="1040" class="copy">2. Measure contact velocity along the inward normal with velocityAt(point).</text>
+<text x="588" y="1066" class="small">Already stationary or moving away? Keep the position correction; skip the impulse.</text>
+<text x="560" y="1102" class="copy">3. Choose bounce strength: restitution defaults to 0.55.</text>
+<text x="588" y="1128" class="small">Only bounce below −0.5 m/s; slower contacts stop without rebound so they can settle.</text>
+<text x="560" y="1164" class="copy">4. Account for both translation and rotation when calculating the impulse.</text>
+<text x="588" y="1194" class="code">arm = r × normal</text>
+<text x="588" y="1221" class="code">J = −(1 + bounce) × normalSpeed / (1/mass + arm²/inertia)</text>
+<text x="588" y="1248" class="code">applyImpulse(normal × J, contactPoint)</text>
+<text x="72" y="1320" class="section">CONVENTIONS</text>
+<text x="245" y="1320" class="small">+X right · +Y up · positive angles anticlockwise · lengths in m · time in s</text>
+<text x="72" y="1350" class="small">2D cross product: r × F = r.x × F.y − r.y × F.x; its signed scalar gives torque.</text>
+</svg>

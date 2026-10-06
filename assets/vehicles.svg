@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1280" viewBox="0 0 1500 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Inside Motion Lab vehicles.js</title>
+  <desc id="desc">Method-level behaviour of Vehicle: construction and mode installation, force application and integration, Classic ship aim correction, world-space vertices, and boundary-facing contact selection.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#101a2b"/><stop offset="1" stop-color="#09111e"/></linearGradient>
+    <linearGradient id="panel" x2="1" y2="1"><stop stop-color="#1c2b41"/><stop offset="1" stop-color="#142137"/></linearGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#85ddb5"/></marker>
+    <marker id="gold" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#ffd080"/></marker>
+    <style>
+      text{font-family:Inter,"Segoe UI",Arial,sans-serif;fill:#edf3fb}.title{font-size:36px;font-weight:750}.subtitle{font-size:17px;fill:#a8bad0}.section{font-size:13px;font-weight:750;letter-spacing:1.4px;fill:#91a7c2}.card{fill:url(#panel);stroke:#30435e;stroke-width:1.4}.head{font-size:21px;font-weight:700}.copy{font-size:16px;fill:#c1cfdf}.small{font-size:14px;fill:#a8b9cf}.code{font-family:Consolas,monospace;font-size:16px;fill:#91d9f5}.line{fill:none;stroke:#85ddb5;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1500" height="1280" fill="url(#bg)"/>
+  <circle cx="1400" cy="50" r="190" fill="#2d527a" opacity=".1"/>
+  <text x="72" y="70" class="title">Inside vehicles.js</text>
+  <text x="74" y="103" class="subtitle">What each method does: install a mode, advance its motion, and calculate its world-space geometry.</text>
+
+  <text x="72" y="150" class="section">1 · CONSTRUCTION AND INSTALL(MODE)</text>
+  <rect x="72" y="172" width="660" height="256" rx="16" class="card"/>
+  <rect x="72" y="172" width="6" height="256" rx="3" fill="#74c9ef"/>
+  <text x="98" y="212" class="head">Keep the body; replace the mode’s components</text>
+  <text x="98" y="250" class="code">constructor(body): save body + baseInertia; install('car')</text>
+  <text x="98" y="288" class="copy">install(mode) calls configurations[mode]() for fresh objects.</text>
+  <text x="98" y="321" class="copy">Assign the returned shell and dynamics, and record the mode.</text>
+  <text x="98" y="359" class="copy">Use mass × shell.inertiaPerMass if the shell supplies it;</text>
+  <text x="98" y="386" class="copy">otherwise restore baseInertia. Clear accumulated force and torque.</text>
+  <text x="98" y="412" class="small">Position, velocity, angle and angular velocity are preserved by install().</text>
+  <rect x="762" y="172" width="666" height="256" rx="16" class="card"/>
+  <rect x="762" y="172" width="6" height="256" rx="3" fill="#74c9ef"/>
+  <text x="788" y="212" class="head">The three configuration factories</text>
+  <text x="788" y="254" class="code">car   → RectangleShell + CarDynamics</text>
+  <text x="788" y="292" class="code">ship  → BarbellShell + ShipDynamics(shell.craft)</text>
+  <text x="788" y="330" class="code">brick → RectangleShell + ManualForceDynamics</text>
+  <text x="788" y="372" class="copy">The ship’s craft point is its thrust attachment.</text>
+  <text x="788" y="405" class="small">Every call constructs a new pair, even when reinstalling the same mode.</text>
+
+  <text x="72" y="476" class="section">2 · UPDATE(CONTROLS, DT) · EXECUTION ORDER</text>
+  <rect x="72" y="498" width="432" height="192" rx="16" class="card"/>
+  <rect x="534" y="498" width="432" height="192" rx="16" class="card"/>
+  <rect x="996" y="498" width="432" height="192" rx="16" class="card"/>
+  <text x="98" y="538" class="head">A · Apply the selected behaviour</text>
+  <text x="98" y="576" class="code">dynamics.applyForces(body, controls, dt)</text>
+  <text x="98" y="614" class="copy">Accumulate this step’s forces and torque.</text>
+  <text x="98" y="654" class="small">Uses the currently installed dynamics object.</text>
+  <text x="560" y="538" class="head">B · Save angle, then integrate</text>
+  <text x="560" y="576" class="code">previousAngle = body.angle</text>
+  <text x="560" y="608" class="code">body.integrate(dt)</text>
+  <text x="560" y="654" class="small">Advance translation and rotation using physics.js.</text>
+  <text x="1022" y="538" class="head">C · Correct Classic ship aim</text>
+  <text x="1022" y="576" class="code">headAngle -= body.angle − previousAngle</text>
+  <text x="1022" y="614" class="copy">Wrap modulo 2π. Ship + Classic mode only.</text>
+  <text x="1022" y="647" class="small">Preserve world aim through actual body rotation,</text>
+  <text x="1022" y="673" class="small">including angular acceleration from this step.</text>
+  <path d="M504 594H526M966 594H988" class="line" marker-end="url(#arrow)"/>
+
+  <text x="72" y="738" class="section">3 · WORLDPOINTS() · RETURN TRANSFORMED SHELL VERTICES</text>
+  <rect x="72" y="760" width="660" height="158" rx="16" class="card"/>
+  <rect x="762" y="760" width="666" height="158" rx="16" class="card"/>
+  <text x="98" y="800" class="head">Car / Brick: transform each local point</text>
+  <text x="98" y="838" class="code">return shell.points.map(p → body.toWorld(p))</text>
+  <text x="98" y="877" class="copy">The body transform rotates, then translates.</text>
+  <text x="98" y="903" class="small">Returns new world-space points; the stored shell vertices remain unchanged.</text>
+  <text x="788" y="800" class="head">Ship: rotate the head around its craft point first</text>
+  <text x="788" y="838" class="code">p = craft + rotate(p − craft, dynamics.headAngle)</text>
+  <text x="788" y="877" class="copy">Then apply body.toWorld(p) to the adjusted vertex.</text>
+  <text x="788" y="903" class="small">These are the triangular head’s vertices, not the counterweight circle.</text>
+
+  <text x="72" y="966" class="section">4 · SUPPORTPOINT(NORMAL) · RETURN THE BOUNDARY-FACING CONTACT LOCATION</text>
+  <rect x="72" y="988" width="432" height="222" rx="16" class="card"/>
+  <rect x="534" y="988" width="894" height="222" rx="16" class="card"/>
+  <text x="98" y="1028" class="head">Flat face → midpoint contact</text>
+  <rect x="192" y="1050" width="194" height="70" rx="3" fill="#223d55" stroke="#74c9ef" stroke-width="2"/>
+  <line x1="118" y1="1120" x2="450" y2="1120" stroke="#ffd080" stroke-width="4"/>
+  <circle cx="192" cy="1120" r="5" fill="#74c9ef"/><circle cx="386" cy="1120" r="5" fill="#74c9ef"/>
+  <circle cx="289" cy="1120" r="6" fill="#ffd080"/>
+  <path d="M289 1120V1065" fill="none" stroke="#ffd080" stroke-width="3" marker-end="url(#gold)"/>
+  <text x="306" y="1090" class="small">normal</text>
+  <text x="98" y="1159" class="copy">Average tied points on the contacting face.</text>
+  <text x="98" y="1189" class="small">Avoid artificial spin from choosing just one corner.</text>
+  <text x="560" y="1028" class="head">The normal points inward; choose the minimum projection</text>
+  <text x="560" y="1064" class="copy">1. Start with worldPoints(). For Ship, also add the counterweight’s surface point:</text>
+  <text x="588" y="1094" class="code">body.toWorld(shell.counterweight) − normal × shell.radius</text>
+  <text x="560" y="1131" class="copy">2. Find the minimum dot(point, normal); collect points within 1e-8 of it.</text>
+  <text x="560" y="1168" class="copy">3. Return their average: sum of contact points divided by the contact count.</text>
+  <text x="560" y="1195" class="small">This method selects a location; it does not apply a collision impulse.</text>
+
+  <text x="72" y="1250" class="small">Additional exports: shell and dynamics classes, plus ORIGINAL_ENGINE_FORCE, remain available through this module.</text>
+</svg>

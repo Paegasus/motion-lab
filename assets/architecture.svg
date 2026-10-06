@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Motion Lab architecture and runtime flow</title>
+  <desc id="desc">A clean left-to-right map of the Motion Lab browser interface, startup wiring, fixed-step simulation, vehicle model, renderer, and shared utilities.</desc>
+  <defs>
+    <linearGradient id="background" x2="0" y2="1"><stop stop-color="#101a2b"/><stop offset="1" stop-color="#09111e"/></linearGradient>
+    <linearGradient id="panel" x2="1" y2="1"><stop stop-color="#1c2b41"/><stop offset="1" stop-color="#142137"/></linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#020813" flood-opacity=".28"/></filter>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#74c9ef"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#85ddb5"/></marker>
+    <marker id="arrow-gold" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#ffd080"/></marker>
+    <style>
+      text{font-family:Inter,"Segoe UI",Arial,sans-serif;fill:#edf3fb}.title{font-size:38px;font-weight:750;letter-spacing:-.6px}.subtitle{font-size:17px;fill:#a8bad0}.section{font-size:13px;font-weight:750;letter-spacing:1.5px;fill:#91a7c2}.card{fill:url(#panel);stroke:#30435e;stroke-width:1.4}.file{font-family:Consolas,monospace;font-size:15px;font-weight:700;fill:#91d9f5}.head{font-size:21px;font-weight:700}.copy{font-size:15px;fill:#c1cfdf}.small{font-size:13px;fill:#a8b9cf}.label{font-size:12px;font-weight:700;letter-spacing:.45px}.line{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.divider{stroke:#30425b;stroke-width:1}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="url(#background)"/>
+  <circle cx="1335" cy="50" r="210" fill="#2d527a" opacity=".1"/>
+  <circle cx="20" cy="865" r="200" fill="#138177" opacity=".08"/>
+
+  <text x="72" y="72" class="title">How Motion Lab works</text>
+  <text x="74" y="105" class="subtitle">UI events feed a fixed-step simulation; the Canvas renderer draws the resulting state.</text>
+
+  <text x="72" y="154" class="section">STARTUP · THE PAGE WIRES THE OBJECTS TOGETHER</text>
+  <g filter="url(#shadow)">
+    <rect x="72" y="175" width="300" height="116" rx="16" class="card"/>
+    <rect x="72" y="175" width="6" height="116" rx="3" fill="#74c9ef"/>
+    <text x="98" y="211" class="file">index.html · style.css</text>
+    <text x="98" y="247" class="head">Page &amp; controls</text>
+    <text x="98" y="273" class="copy">Canvas, buttons, settings</text>
+
+    <rect x="532" y="175" width="376" height="116" rx="16" class="card"/>
+    <rect x="532" y="175" width="6" height="116" rx="3" fill="#74c9ef"/>
+    <text x="558" y="211" class="file">src/main.js</text>
+    <text x="558" y="247" class="head">App wiring &amp; commands</text>
+    <text x="558" y="273" class="copy">Creates objects, handles UI actions, starts loop</text>
+
+    <rect x="1068" y="175" width="300" height="116" rx="16" class="card"/>
+    <rect x="1068" y="175" width="6" height="116" rx="3" fill="#ffd080"/>
+    <text x="1094" y="211" class="file">src/presentation.js</text>
+    <text x="1094" y="247" class="head">Input presentation</text>
+    <text x="1094" y="273" class="copy">Control labels, touch hints, input HUD</text>
+  </g>
+  <path d="M372 233H520" class="line" stroke="#74c9ef" marker-end="url(#arrow-blue)"/>
+  <text x="405" y="216" class="label" fill="#74c9ef">LOADS APP</text>
+  <path d="M908 233H1056" class="line" stroke="#ffd080" marker-end="url(#arrow-gold)"/>
+  <text x="934" y="216" class="label" fill="#ffd080">UPDATES DISPLAY</text>
+
+  <text x="72" y="352" class="section">RUNTIME · STRAIGHT THROUGH THE SIMULATION, THEN DRAW</text>
+  <g filter="url(#shadow)">
+    <rect x="72" y="380" width="270" height="204" rx="18" class="card"/>
+    <rect x="72" y="380" width="6" height="204" rx="3" fill="#74c9ef"/>
+    <text x="98" y="420" class="file">src/input.js</text>
+    <text x="98" y="460" class="head">Input</text>
+    <text x="98" y="493" class="copy">Keyboard + pointer controls</text>
+    <text x="98" y="518" class="copy">become one control state.</text>
+    <line x1="98" y1="539" x2="316" y2="539" class="divider"/>
+    <text x="98" y="562" class="small">Brick drag queues an impulse.</text>
+
+    <rect x="408" y="380" width="292" height="204" rx="18" class="card"/>
+    <rect x="408" y="380" width="6" height="204" rx="3" fill="#85ddb5"/>
+    <text x="434" y="420" class="file">src/game.js</text>
+    <text x="434" y="460" class="head">Game + FixedClock</text>
+    <text x="434" y="493" class="copy">Runs 1/120 s physics steps</text>
+    <text x="434" y="518" class="copy">(up to 12 per display frame).</text>
+    <line x1="434" y1="539" x2="674" y2="539" class="divider"/>
+    <text x="434" y="562" class="small">Gravity · barriers · pause · draw</text>
+
+    <rect x="766" y="380" width="310" height="204" rx="18" class="card"/>
+    <rect x="766" y="380" width="6" height="204" rx="3" fill="#85ddb5"/>
+    <text x="792" y="420" class="file">src/vehicles.js</text>
+    <text x="792" y="460" class="head">Vehicle coordinator</text>
+    <text x="792" y="493" class="copy">Installs Car / Ship / Brick</text>
+    <text x="792" y="518" class="copy">and applies the selected dynamics.</text>
+    <line x1="792" y1="539" x2="1050" y2="539" class="divider"/>
+    <text x="792" y="562" class="small">Owns body, shell and dynamics.</text>
+
+    <rect x="1142" y="380" width="226" height="204" rx="18" class="card"/>
+    <rect x="1142" y="380" width="6" height="204" rx="3" fill="#ffd080"/>
+    <text x="1168" y="420" class="file">src/renderer.js</text>
+    <text x="1168" y="460" class="head">CanvasRenderer</text>
+    <text x="1168" y="493" class="copy">Draws the updated</text>
+    <text x="1168" y="518" class="copy">world each frame.</text>
+    <line x1="1168" y1="539" x2="1342" y2="539" class="divider"/>
+    <text x="1168" y="562" class="small">Camera · trails · skids</text>
+  </g>
+  <path d="M342 482H396" class="line" stroke="#74c9ef" marker-end="url(#arrow-blue)"/>
+  <text x="349" y="463" class="label" fill="#74c9ef">SAMPLE</text>
+  <path d="M700 482H754" class="line" stroke="#85ddb5" marker-end="url(#arrow-green)"/>
+  <text x="707" y="463" class="label" fill="#85ddb5">UPDATE</text>
+  <path d="M1076 482H1130" class="line" stroke="#ffd080" marker-end="url(#arrow-gold)"/>
+  <text x="1083" y="463" class="label" fill="#ffd080">STATE</text>
+
+  <text x="72" y="615" class="section">VEHICLE COMPONENTS</text>
+  <g filter="url(#shadow)">
+    <rect x="72" y="668" width="400" height="130" rx="16" class="card"/>
+    <rect x="72" y="668" width="6" height="130" rx="3" fill="#85ddb5"/>
+    <text x="98" y="704" class="file">src/physics.js</text>
+    <text x="98" y="739" class="head">RigidBody &amp; bounceInside</text>
+    <text x="98" y="770" class="copy">Motion integration, impulses, wall contacts</text>
+
+    <rect x="520" y="668" width="400" height="130" rx="16" class="card"/>
+    <rect x="520" y="668" width="6" height="130" rx="3" fill="#85ddb5"/>
+    <text x="546" y="704" class="file">src/dynamics.js</text>
+    <text x="546" y="739" class="head">Car · Ship · Brick behaviour</text>
+    <text x="546" y="770" class="copy">Turns controls into forces and torques</text>
+
+    <rect x="968" y="668" width="400" height="130" rx="16" class="card"/>
+    <rect x="968" y="668" width="6" height="130" rx="3" fill="#85ddb5"/>
+    <text x="994" y="704" class="file">src/shells.js</text>
+    <text x="994" y="739" class="head">Vehicle geometry</text>
+    <text x="994" y="770" class="copy">Outlines, hit testing, collision support points</text>
+  </g>
+  <path d="M920 733H952" class="line" stroke="#85ddb5" marker-end="url(#arrow-green)"/>
+  <text x="915" y="716" class="label" fill="#85ddb5">SHAPE</text>
+  <path d="M921 584V604H720V622H1168M720 622H272" class="line" stroke="#85ddb5" stroke-width="4"/>
+  <path d="M272 622V656" class="line" stroke="#85ddb5" marker-end="url(#arrow-green)"/>
+  <path d="M720 622V656" class="line" stroke="#85ddb5" marker-end="url(#arrow-green)"/>
+  <path d="M1168 622V656" class="line" stroke="#85ddb5" marker-end="url(#arrow-green)"/>
+  <circle cx="272" cy="622" r="4" fill="#85ddb5"/>
+  <circle cx="720" cy="622" r="4" fill="#85ddb5"/>
+  <circle cx="1168" cy="622" r="4" fill="#85ddb5"/>
+
+  <rect x="72" y="824" width="1296" height="48" rx="12" fill="#111d30" stroke="#293b55"/>
+  <text x="96" y="854" class="file">Shared helpers</text>
+  <text x="263" y="854" class="copy">src/math.js supplies vector operations</text>
+  <circle cx="640" cy="848" r="3" fill="#7187a1"/>
+  <text x="663" y="854" class="copy">src/constants.js keeps shared values aligned</text>
+  <text x="1105" y="854" class="small">Standalone &amp; website copies are generated separately.</text>
+</svg>

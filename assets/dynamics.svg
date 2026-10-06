@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1580" viewBox="0 0 1500 1580" role="img" aria-labelledby="title desc">
+<title id="title">Inside Motion Lab dynamics.js</title>
+<desc id="desc">The three force providers: CarDynamics resolves point velocity along four wheel axes, applies damping and handbrake changes, and detects rear skids. ShipDynamics supports world-relative classic aiming and physical side thrust with boost and drag. ManualForceDynamics applies a pointer force at a local attachment. Vehicle integrates the accumulated forces afterward.</desc>
+<defs>
+<linearGradient id="bg" x2="0" y2="1"><stop stop-color="#101a2b"/><stop offset="1" stop-color="#09111e"/></linearGradient>
+<linearGradient id="panel" x2="1" y2="1"><stop stop-color="#1c2b41"/><stop offset="1" stop-color="#142137"/></linearGradient>
+<marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#85ddb5"/></marker>
+<marker id="gold" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#ffd080"/></marker>
+<style>
+text{font-family:Inter,"Segoe UI",Arial,sans-serif;fill:#edf3fb}.title{font-size:36px;font-weight:750}.subtitle{font-size:17px;fill:#a8bad0}.section{font-size:13px;font-weight:750;letter-spacing:1.4px;fill:#91a7c2}.card{fill:url(#panel);stroke:#30435e;stroke-width:1.4}.head{font-size:21px;font-weight:700}.copy{font-size:16px;fill:#c1cfdf}.small{font-size:14px;fill:#a8b9cf}.code{font-family:Consolas,monospace;font-size:16px;fill:#91d9f5}.line{fill:none;stroke:#85ddb5;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+</style></defs>
+<rect width="1500" height="1580" fill="url(#bg)"/><circle cx="1400" cy="50" r="190" fill="#2d527a" opacity=".1"/>
+<text x="72" y="70" class="title">Inside dynamics.js</text>
+<text x="74" y="103" class="subtitle">Vehicle-specific behaviours turn controls and body motion into forces, torque and display state.</text>
+<text x="72" y="148" class="section">1 · SHARED CONTRACT · applyForces(body, controls, dt)</text>
+<rect x="72" y="171" width="432" height="124" rx="16" class="card"/><rect x="72" y="171" width="6" height="124" rx="3" fill="#85ddb5"/>
+<rect x="534" y="171" width="432" height="124" rx="16" class="card"/><rect x="534" y="171" width="6" height="124" rx="3" fill="#85ddb5"/>
+<rect x="996" y="171" width="432" height="124" rx="16" class="card"/><rect x="996" y="171" width="6" height="124" rx="3" fill="#85ddb5"/>
+<text x="98" y="208" class="code">Input.sample()</text>
+<text x="98" y="240" class="copy">Throttle, turn, handbrake, boost or force.</text>
+<text x="98" y="272" class="small">Game also supplies gravity / atmospheric drag.</text>
+<text x="560" y="208" class="code">Selected dynamics.applyForces(...)</text>
+<text x="560" y="240" class="copy">Accumulates force and torque on the body.</text>
+<text x="560" y="272" class="small">Vehicle installs a fresh provider for each mode.</text>
+<text x="1022" y="208" class="code">Vehicle.update() → body.integrate(dt)</text>
+<text x="1022" y="240" class="copy">Physics updates velocity, position and spin.</text>
+<text x="1022" y="272" class="small">Barrier response happens afterward in Game.</text>
+<path d="M504 233H526" class="line" marker-end="url(#arrow)"/>
+<path d="M966 233H988" class="line" marker-end="url(#arrow)"/>
+<text x="72" y="344" class="section">2 · CARDYNAMICS · ENGINE + FOUR POINT-VELOCITY TYRES</text>
+<rect x="72" y="368" width="432" height="520" rx="16" class="card"/><rect x="72" y="368" width="6" height="520" rx="3" fill="#85ddb5"/>
+<text x="98" y="408" class="head">Drive force acts at the centre</text>
+<text x="98" y="444" class="code">F = forward × throttle × engineForce</text>
+<text x="98" y="474" class="copy">Decel brakes forward motion at full strength.</text>
+<text x="98" y="501" class="copy">At rest / reversing, decel uses 75% thrust.</text>
+<rect x="177" y="551" width="205" height="155" rx="22" fill="#223d55" stroke="#74c9ef" stroke-width="2"/>
+<circle cx="280" cy="629" r="5" fill="#74c9ef"/>
+<rect x="189" y="564" width="40" height="13" rx="4" fill="#85ddb5"/>
+<rect x="189" y="679" width="40" height="13" rx="4" fill="#85ddb5"/>
+<rect x="329" y="564" width="40" height="13" rx="4" fill="#85ddb5" transform="rotate(-20 349 571)"/>
+<rect x="329" y="679" width="40" height="13" rx="4" fill="#85ddb5" transform="rotate(-20 349 686)"/>
+<path d="M349 571L434 540" class="line" marker-end="url(#arrow)"/>
+<path d="M349 571L325 506" fill="none" stroke="#ffd080" stroke-width="3" marker-end="url(#gold)"/>
+
+<text x="389" y="530" class="small">rolling</text>
+<text x="333" y="526" class="small">lateral</text>
+<text x="177" y="738" class="small">rear</text>
+<text x="342" y="738" class="small">front (+X)</text>
+<text x="98" y="781" class="copy">Front wheels: angle = turn × 0.55 rad.</text>
+<text x="98" y="808" class="copy">Rear wheels: angle = 0.</text>
+<text x="98" y="846" class="small">Tyre points: (±1.35, ±0.7) metres.</text>
+<text x="98" y="873" class="small">Their off-centre forces also generate torque.</text>
+<rect x="534" y="368" width="894" height="307" rx="16" class="card"/><rect x="534" y="368" width="6" height="307" rx="3" fill="#85ddb5"/>
+<text x="560" y="408" class="head">For each tyre: resolve velocity, then oppose both components</text>
+<text x="560" y="447" class="code">point = body.toWorld(tyre.position)</text>
+<text x="560" y="477" class="code">velocity = body.velocityAt(point)    // translation + rotation</text>
+<text x="560" y="513" class="code">heading = body.angle + tyre.angle</text>
+<text x="560" y="543" class="code">rolling = (cos(heading), sin(heading)); lateral = (−rolling.y, rolling.x)</text>
+<text x="560" y="578" class="code">{ x: rollingSpeed, y: lateralSpeed } = resolve(velocity, rolling)</text>
+<text x="560" y="613" class="code">F = rolling × (−rollingResistance × rollingSpeed)</text>
+<text x="560" y="640" class="code">  + lateral × (−lateralResistance × lateralSpeed)</text>
+<text x="560" y="662" class="small">Apply F at the tyre point. Damping is linear, with no force cap.</text>
+<rect x="534" y="699" width="432" height="189" rx="16" class="card"/><rect x="534" y="699" width="6" height="189" rx="3" fill="#ffd080"/>
+<rect x="996" y="699" width="432" height="189" rx="16" class="card"/><rect x="996" y="699" width="6" height="189" rx="3" fill="#ffd080"/>
+<text x="560" y="738" class="head">Handbrake changes rear tyres</text>
+<text x="560" y="774" class="copy">Held: reduce sideways grip; increase rolling</text>
+<text x="560" y="801" class="copy">resistance. Strength scales both effects.</text>
+<text x="560" y="835" class="copy">Release: rear grip recovers over 0.15 s.</text>
+<text x="560" y="865" class="small">Front tyre coefficients are unchanged.</text>
+<text x="1022" y="738" class="head">Rear skid state follows sideways speed</text>
+<text x="1022" y="774" class="code">scaledSpeed = abs(lateralSpeed) × 0.7</text>
+<text x="1022" y="807" class="copy">Start above 1.5; stay skidding above 0.8.</text>
+<text x="1022" y="839" class="copy">Two thresholds prevent flickering near onset.</text>
+<text x="1022" y="865" class="small">Per-tyre state is available to the renderer.</text>
+<text x="72" y="937" class="section">3 · SHIPDYNAMICS · THRUST AT THE SHIP HEAD + DRAG</text>
+<rect x="72" y="960" width="432" height="272" rx="16" class="card"/><rect x="72" y="960" width="6" height="272" rx="3" fill="#74c9ef"/>
+<rect x="534" y="960" width="432" height="272" rx="16" class="card"/><rect x="534" y="960" width="6" height="272" rx="3" fill="#74c9ef"/>
+<rect x="996" y="960" width="432" height="272" rx="16" class="card"/><rect x="996" y="960" width="6" height="272" rx="3" fill="#74c9ef"/>
+<text x="98" y="1000" class="head">Classic: aim the head</text>
+<text x="98" y="1036" class="copy">turn changes headAngle at 2.5 rad/s.</text>
+<text x="98" y="1065" class="copy">Forward thrust follows the aimed head.</text>
+<text x="98" y="1101" class="copy">Vehicle compensates for body rotation</text>
+<text x="98" y="1128" class="copy">so the aim remains world-relative.</text>
+<text x="98" y="1164" class="copy">Aiming itself applies no torque;</text>
+<text x="98" y="1191" class="copy">off-centre thrust can still rotate the body.</text>
+<text x="98" y="1215" class="small">setControlMode() resets headAngle and force.</text>
+<text x="560" y="1000" class="head">Physical: side thrust</text>
+<text x="560" y="1036" class="copy">Local force = (forwardThrust, sideThrust).</text>
+<text x="560" y="1072" class="code">Forward: throttle × 5000 N</text>
+<text x="560" y="1101" class="code">Sideways: turn × 2600 N</text>
+<text x="560" y="1137" class="copy">Rotate local force into world coordinates.</text>
+<text x="560" y="1164" class="copy">Apply at body.toWorld(thrustPoint).</text>
+<text x="560" y="1204" class="small">The offset creates physical torque.</text>
+<text x="1022" y="1000" class="head">Boost and drag: both modes</text>
+<text x="1022" y="1036" class="copy">Boost doubles forward and side thrust.</text>
+<text x="1022" y="1065" class="copy">With no throttle, boost supplies forward</text>
+<text x="1022" y="1092" class="copy">thrust unless using physical side thrust.</text>
+<text x="1022" y="1128" class="code">Fdrag = −mass × 0.12 × velocity</text>
+<text x="1022" y="1157" class="code">torque -= inertia × 0.35 × spin</text>
+<text x="1022" y="1193" class="copy">Drag opposes translation and rotation.</text>
+<text x="1022" y="1215" class="small">appliedForce also feeds the ship display.</text>
+<text x="72" y="1280" class="section">4 · MANUALFORCEDYNAMICS · THE BRICK</text>
+<rect x="72" y="1302" width="660" height="170" rx="16" class="card"/><rect x="72" y="1302" width="6" height="170" rx="3" fill="#ffd080"/>
+<rect x="762" y="1302" width="666" height="170" rx="16" class="card"/><rect x="762" y="1302" width="6" height="170" rx="3" fill="#ffd080"/>
+<text x="98" y="1342" class="head">Force tool: a world force at a local attachment</text>
+<text x="98" y="1380" class="copy">If controls.force exists:</text>
+<text x="98" y="1410" class="code">body.addForce(force.vector, body.toWorld(force.local))</text>
+<text x="98" y="1446" class="small">An off-centre attachment creates torque automatically.</text>
+<text x="788" y="1342" class="head">Impulse tool follows a separate path</text>
+<text x="788" y="1380" class="copy">Input queues an impulse on drag release.</text>
+<text x="788" y="1410" class="copy">Game.step() applies it directly through body.applyImpulse().</text>
+<text x="788" y="1446" class="small">ManualForceDynamics handles continuous force only.</text>
+<text x="72" y="1520" class="section">READING THE EQUATIONS</text>
+<text x="320" y="1520" class="small">resolve returns signed speeds along a unit axis and its anticlockwise perpendicular.</text>
+<text x="72" y="1551" class="small">Values shown are source defaults / constants. Settings can change engine force, handbrake strength and ship control mode.</text>
+</svg>

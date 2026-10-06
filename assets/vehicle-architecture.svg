@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1240" viewBox="0 0 1500 1240" role="img" aria-labelledby="title desc">
+  <title id="title">Inside the Motion Lab Vehicle coordinator</title>
+  <desc id="desc">Detailed diagram of how main.js selects fresh vehicle components, how Vehicle combines a rigid body with shell and dynamics, how a simulation step updates it, and how shell support points feed barrier collision handling.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#101a2b"/><stop offset="1" stop-color="#09111e"/></linearGradient>
+    <linearGradient id="panel" x2="1" y2="1"><stop stop-color="#1c2b41"/><stop offset="1" stop-color="#142137"/></linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#020813" flood-opacity=".27"/></filter>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#74c9ef"/></marker>
+    <marker id="green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#85ddb5"/></marker>
+    <marker id="gold" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#ffd080"/></marker>
+    <style>
+      text{font-family:Inter,"Segoe UI",Arial,sans-serif;fill:#edf3fb}.title{font-size:36px;font-weight:750;letter-spacing:-.5px}.subtitle{font-size:16px;fill:#a8bad0}.section{font-size:13px;font-weight:750;letter-spacing:1.4px;fill:#91a7c2}.card{fill:url(#panel);stroke:#30435e;stroke-width:1.4}.file{font-family:Consolas,monospace;font-size:14px;font-weight:700;fill:#91d9f5}.head{font-size:20px;font-weight:700}.copy{font-size:14px;fill:#c1cfdf}.small{font-size:12px;fill:#a8b9cf}.tag{font-size:11px;font-weight:750;letter-spacing:.5px}.line{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1500" height="1240" fill="url(#bg)"/>
+  <circle cx="1410" cy="50" r="190" fill="#2d527a" opacity=".1"/>
+  <circle cx="40" cy="1120" r="180" fill="#138177" opacity=".08"/>
+
+  <text x="72" y="70" class="title">Inside the Vehicle coordinator</text>
+  <text x="74" y="101" class="subtitle">One persistent rigid body; each mode installs a fresh shape and behaviour pair.</text>
+
+  <text x="72" y="150" class="section">1 · MODE SELECTION BUILDS A COMPONENT PAIR</text>
+  <g filter="url(#shadow)">
+    <rect x="72" y="172" width="1356" height="112" rx="16" class="card"/>
+    <rect x="72" y="172" width="7" height="112" rx="3" fill="#74c9ef"/>
+    <text x="98" y="207" class="file">src/main.js</text>
+    <text x="98" y="241" class="head">selectVehicleMode(mode)</text>
+    <text x="98" y="266" class="copy">Clears input and calls vehicle.install(mode).</text>
+    <line x1="750" y1="190" x2="750" y2="266" class="divider"/>
+    <text x="790" y="207" class="file">src/vehicles.js · configurations[mode]()</text>
+    <text x="790" y="241" class="head">Factory returns { shell, dynamics }</text>
+    <text x="790" y="266" class="copy">Fresh mutable pair; Vehicle keeps its existing RigidBody.</text>
+  </g>
+  <path d="M578 241H738" class="line" stroke="#74c9ef" marker-end="url(#blue)"/>
+  <path d="M750 284V302H288M750 302H1212" class="line" stroke="#85ddb5" stroke-width="4"/>
+  <path d="M288 302V336M750 302V336M1212 302V336" class="line" stroke="#85ddb5" marker-end="url(#green)"/>
+  <circle cx="288" cy="302" r="4" fill="#85ddb5"/>
+  <circle cx="750" cy="302" r="4" fill="#85ddb5"/>
+  <circle cx="1212" cy="302" r="4" fill="#85ddb5"/>
+  <text x="72" y="301" class="tag" fill="#85ddb5">MODE FACTORIES</text>
+
+  <g filter="url(#shadow)">
+    <rect x="72" y="348" width="432" height="160" rx="16" class="card"/>
+    <rect x="72" y="348" width="6" height="160" rx="3" fill="#85ddb5"/>
+    <text x="98" y="384" class="file">CAR</text>
+    <text x="98" y="421" class="head">RectangleShell + CarDynamics</text>
+    <text x="98" y="452" class="copy">Four tyre points; steering, engine, resistance,</text>
+    <text x="98" y="475" class="copy">handbrake and skid state.</text>
+    <text x="98" y="495" class="small">Fresh car components on every mode install.</text>
+
+    <rect x="534" y="348" width="432" height="160" rx="16" class="card"/>
+    <rect x="534" y="348" width="6" height="160" rx="3" fill="#85ddb5"/>
+    <text x="560" y="384" class="file">SHIP</text>
+    <text x="560" y="421" class="head">BarbellShell + ShipDynamics</text>
+    <text x="560" y="452" class="copy">Mass-weighted head and counterweight geometry;</text>
+    <text x="560" y="475" class="copy">dynamics receives shell.craft as its thrust point.</text>
+    <text x="560" y="495" class="small">Classic or physical ship controls.</text>
+
+    <rect x="996" y="348" width="432" height="160" rx="16" class="card"/>
+    <rect x="996" y="348" width="6" height="160" rx="3" fill="#85ddb5"/>
+    <text x="1022" y="384" class="file">BRICK</text>
+    <text x="1022" y="421" class="head">RectangleShell + ManualForceDynamics</text>
+    <text x="1022" y="452" class="copy">Pointer drag supplies force or a queued impulse</text>
+    <text x="1022" y="475" class="copy">at the selected local point.</text>
+    <text x="1022" y="495" class="small">Fresh brick components on every mode install.</text>
+  </g>
+  <text x="72" y="574" class="section">2 · VEHICLE HOLDS THE BODY AND THE ACTIVE PAIR</text>
+  <g filter="url(#shadow)">
+    <rect x="72" y="590" width="1356" height="150" rx="18" class="card"/>
+    <rect x="72" y="590" width="7" height="150" rx="3" fill="#74c9ef"/>
+    <text x="100" y="628" class="file">Vehicle · src/vehicles.js</text>
+    <text x="100" y="666" class="head">body + shell + dynamics + mode</text>
+    <text x="100" y="696" class="copy">install(mode) replaces shell/dynamics, sets matching inertia, and clears forces.</text>
+    <text x="100" y="719" class="small">The RigidBody identity and its position/velocity persist across mode switches.</text>
+    <line x1="750" y1="613" x2="750" y2="718" class="divider"/>
+    <text x="790" y="628" class="file">Component responsibilities</text>
+    <text x="790" y="666" class="head">shell = geometry  ·  dynamics = forces</text>
+    <text x="790" y="696" class="copy">Ship shell supplies inertiaPerMass; Vehicle scales it by body.mass.</text>
+    <text x="790" y="719" class="small">Car and Brick use the body's base inertia.</text>
+  </g>
+  <path d="M288 508V540M750 508V540M1212 508V540" class="line" stroke="#85ddb5"/>
+  <path d="M288 540H1212M750 540V578" class="line" stroke="#85ddb5" stroke-width="4" marker-end="url(#green)"/>
+  <circle cx="288" cy="540" r="4" fill="#85ddb5"/>
+  <circle cx="750" cy="540" r="4" fill="#85ddb5"/>
+  <circle cx="1212" cy="540" r="4" fill="#85ddb5"/>
+
+  <text x="72" y="785" class="section">3 · EACH FIXED STEP UPDATES THE SAME BODY</text>
+  <g filter="url(#shadow)">
+    <rect x="72" y="808" width="266" height="128" rx="16" class="card"/>
+    <text x="96" y="844" class="file">Game</text>
+    <text x="96" y="882" class="head">controls + dt</text>
+    <text x="96" y="911" class="copy">Sampled by the fixed clock</text>
+
+    <rect x="420" y="808" width="284" height="128" rx="16" class="card"/>
+    <text x="444" y="844" class="file">Vehicle.update()</text>
+    <text x="444" y="882" class="head">Coordinates one step</text>
+    <text x="444" y="911" class="copy">Calls dynamics, then integrates</text>
+
+    <rect x="786" y="808" width="284" height="128" rx="16" class="card"/>
+    <text x="810" y="844" class="file">dynamics.applyForces()</text>
+    <text x="810" y="882" class="head">Adds force / torque</text>
+    <text x="810" y="911" class="copy">Uses controls, body and dt</text>
+
+    <rect x="1152" y="808" width="276" height="128" rx="16" class="card"/>
+    <text x="1176" y="844" class="file">RigidBody.integrate(dt)</text>
+    <text x="1176" y="882" class="head">Advances motion</text>
+    <text x="1176" y="911" class="copy">Updates velocity and pose</text>
+  </g>
+  <path d="M338 872H408" class="line" stroke="#74c9ef" marker-end="url(#blue)"/>
+  <path d="M704 872H774" class="line" stroke="#85ddb5" marker-end="url(#green)"/>
+  <path d="M1070 872H1140" class="line" stroke="#85ddb5" marker-end="url(#green)"/>
+  <text x="349" y="853" class="tag" fill="#74c9ef">INPUT</text>
+  <text x="712" y="853" class="tag" fill="#85ddb5">DELEGATES</text>
+  <text x="1078" y="853" class="tag" fill="#85ddb5">THEN</text>
+
+  <text x="72" y="1008" class="section">4 · BARRIER COLLISION ASKS THE VEHICLE FOR ITS SUPPORT POINT</text>
+  <g filter="url(#shadow)">
+    <rect x="72" y="1030" width="286" height="126" rx="16" class="card"/>
+    <text x="96" y="1065" class="file">Game · physics</text>
+    <text x="96" y="1101" class="head">bounceInside(...)</text>
+    <text x="96" y="1130" class="copy">Requests support(normal)</text>
+
+    <rect x="416" y="1030" width="322" height="126" rx="16" class="card"/>
+    <text x="440" y="1065" class="file">Vehicle.supportPoint()</text>
+    <text x="440" y="1101" class="head">Finds boundary side</text>
+    <text x="440" y="1130" class="copy">Uses shell points in world space</text>
+
+    <rect x="796" y="1030" width="322" height="126" rx="16" class="card"/>
+    <text x="820" y="1065" class="file">Shell + worldPoints()</text>
+    <text x="820" y="1101" class="head">Transforms geometry</text>
+    <text x="820" y="1130" class="copy">Ship adds the counterweight circle</text>
+
+    <rect x="1176" y="1030" width="252" height="126" rx="16" class="card"/>
+    <text x="1200" y="1065" class="file">src/physics.js</text>
+    <text x="1200" y="1101" class="head">Corrects &amp; bounces</text>
+    <text x="1200" y="1130" class="copy">Contact-point impulse</text>
+  </g>
+  <path d="M358 1093H404" class="line" stroke="#ffd080" marker-end="url(#gold)"/>
+  <path d="M738 1093H784" class="line" stroke="#85ddb5" marker-end="url(#green)"/>
+  <path d="M1118 1093H1164" class="line" stroke="#ffd080" marker-end="url(#gold)"/>
+
+  <text x="72" y="1200" class="small">Related files: src/shells.js defines shape data; src/dynamics.js defines mode behaviours; src/physics.js defines rigid-body motion; src/math.js supplies vector operations.</text>
+</svg>
