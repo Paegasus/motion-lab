@@ -1,3 +1,3 @@
-# motion-lab
+# Motion Lab
 
-![motion-lab screenshot](assets/motion-lab-screenshot.jpg)
+![Motion Lab Screenshot](assets/motion-lab-screenshot.jpg)
